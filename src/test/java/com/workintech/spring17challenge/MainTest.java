@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.workintech.spring17challenge.entity.*;
 import com.workintech.spring17challenge.exceptions.ApiErrorResponse;
 import com.workintech.spring17challenge.exceptions.ApiException;
+import com.workintech.spring17challenge.model.CourseGpa;
+import com.workintech.spring17challenge.model.HighCourseGpa;
+import com.workintech.spring17challenge.model.LowCourseGpa;
+import com.workintech.spring17challenge.model.MediumCourseGpa;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +17,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import com.workintech.spring17challenge.CourseTestResetter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -26,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(ResultAnalyzer.class)
+@ExtendWith(CourseTestResetter.class)
 class MainTest {
 
     @Autowired
@@ -42,6 +48,11 @@ class MainTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        // Reset courses before each test
+        try {
+            mockMvc.perform(delete("/courses/reset"));
+        } catch (Exception ignored) {}
+        
         // Setup a sample Course object
         course = new Course();
         course.setId(1);
@@ -95,9 +106,15 @@ class MainTest {
     @Test
     @Order(1)
     void testCreateCourse() throws Exception {
+        Course newCourse = new Course();
+        newCourse.setId(2);
+        newCourse.setName("Advanced Java");
+        newCourse.setCredit(4);
+        newCourse.setGrade(new Grade(2, "B"));
+        
         mockMvc.perform(post("/courses")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(course)))
+                        .content(objectMapper.writeValueAsString(newCourse)))
                 .andExpect(status().isCreated());
     }
 
